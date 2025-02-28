@@ -1,6 +1,163 @@
+'use client'
 import Image from "next/image";
+import { useEffect, useState } from "react";
+import { ethers } from "ethers";
+import Safe from '@safe-global/protocol-kit'
+import { erc20Abi } from "./erc20Abi";
+import SafeApiKit from "@safe-global/api-kit";
+
+
+const SAFE_ADDRESS = "0x0369788F3977E7e3112d9f8f7382b261c76080Ba"
+
 
 export default function Home() {
+const [provider, setProvider] = useState();
+const [signer, setSigner] = useState();
+const [txnWithFirstSign, setTxnWithFirstSign] = useState();
+const [connectedAddress, setConnectedAddress] = useState("")
+const [genosisSafe, setGenosisSafe] = useState();
+
+  const connectWallet = async () => {
+    if (!window.ethereum) {
+      alert("MetaMask not detected. Please install MetaMask.");
+      return;
+    }
+  
+    const _provider = new ethers.BrowserProvider(window.ethereum);
+    await _provider.send("eth_requestAccounts", []);
+    const _signer = await _provider.getSigner();
+    
+    setProvider(_provider);
+    setSigner(_signer);
+    
+    console.log("Connected with:", await signer.getAddress());
+    return signer;
+  };
+
+  useEffect(()=>{
+    (async()=>{
+      if(signer && provider){
+      const _connectedAddress = await signer.getAddress();
+    console.log("_connectedAddress", _connectedAddress);
+    setConnectedAddress(_connectedAddress)
+
+    const _genosisSafe = await Safe.init({
+      provider: window.ethereum,
+      signer: _connectedAddress,
+      // signer: "0xeB1089e9f0B9edcD11Ae6b6a91576c2EE4Cfd7B1",
+      safeAddress: SAFE_ADDRESS
+    })
+
+    console.log("_genosisSafe : ProtocolKit init : ", _genosisSafe)
+
+    setGenosisSafe(_genosisSafe)
+
+    }else{
+      console.log("signer and provider is not initialised!")
+    }
+    })()
+  },[provider, signer, connectedAddress])
+
+  // create and sign with first signer
+const createSafe1 = async () => {
+  try {
+
+    const safeTransaction = await genosisSafe.createTransaction({
+      transactions: [{
+        to: '0xF70EB631A41F5D21C40256A17d8Afe2B2061CDcB',
+        // to: "0x6dfB4BA28112D05C2d74FEA137C0af7B6AcB3687",
+        value: '0',
+        data: "0x",
+      }]
+    })
+    
+    console.log("safeTransaction cretaed : ", safeTransaction)
+    
+
+    const signedSafeTransaction = await genosisSafe.signTransaction(
+      safeTransaction,
+    )
+
+    console.log("signedSafeTransaction : ", signedSafeTransaction)
+    setTxnWithFirstSign(signedSafeTransaction)
+
+  }catch(e){
+    console.log("error in create safe", e)
+  }
+}
+
+
+// sign with second signer and execute
+const createSafe2 = async () => {
+  try {
+
+    if(txnWithFirstSign){
+console.log("txnWithFirstSign", txnWithFirstSign)
+
+    const signedSafeTransaction = await genosisSafe.signTransaction(
+      txnWithFirstSign,
+    )
+
+    console.log("signedSafeTransaction Second signer : ", signedSafeTransaction)
+
+    const txResponse = await genosisSafe.executeTransaction(
+      signedSafeTransaction,
+      // options // Optional
+    )
+   
+  
+    console.log("✅  txResponse : ", txResponse)
+  }else{
+    console.log("txnWithFirstSign is Undefined")
+  }
+  }catch(e){
+    console.log("error in create safe", e)
+  }
+}
+
+// inprogress
+const getPendingTxnLists = async () => {
+  try{
+    const apiKit = new SafeApiKit({
+      chainId: 11155111n, // sepolia
+    })
+
+    console.log("apiKit", apiKit)
+
+    const pendingTxs = await apiKit.getPendingTransactions(SAFE_ADDRESS)
+  console.log("pendingTxs : ", pendingTxs)
+  }catch(e){
+    console.error("error in getting pending txns", e)
+  }
+}
+
+// random
+const getCalldata = async () => {
+  try{
+
+    let contractAddress = "0x3BB6F518aB08Fc9FE5C40ad064Ba7a826bFE3b33"
+
+
+let numberOfDecimals = 18;
+
+const contractInstance = new ethers.Interface(erc20Abi)
+
+
+// Define recipient and amount (USDT uses 6 decimals, so 2 USDT = 2,000,000)
+const recipient = "0x6dfB4BA28112D05C2d74FEA137C0af7B6AcB3687";
+const numberOfTokens = ethers.parseUnits("2", numberOfDecimals); // 2 USDT = 2 * 10^6
+
+console.log("params", [recipient, numberOfTokens])
+// Encode the function call
+const callData = await contractInstance.encodeFunctionData("transfer", [recipient, numberOfTokens]);
+
+    console.log("callData", callData)
+    
+  }catch(e){
+    console.log("error in calldata", e)
+  }
+}
+
   return (
     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
       <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
@@ -12,42 +169,26 @@ export default function Home() {
           height={38}
           priority
         />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.js
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+        <button
+        className="bg-amber-200 px-5 py-2 cursor-pointer font-black text-black"  
+        onClick={connectWallet} 
+        > 
+        {
+          connectedAddress ? `${connectedAddress.slice(0,6)}...${connectedAddress.slice(-6,-1)}` : "Connect Wallet"
+        }
+        </button>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
+        <button 
+        className="bg-amber-200 px-5 py-2 cursor-pointer font-black text-black"
+        onClick={createSafe1} > Sign1</button>
+        
+        <button 
+        className="bg-amber-200 px-5 py-2 cursor-pointer font-black text-black"  
+        onClick={createSafe2} > Sign2</button>
+
+        <button 
+        className="bg-amber-200 px-5 py-2 cursor-pointer font-black text-black"  
+        onClick={getPendingTxnLists} > Random</button>
       </main>
       <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
         <a

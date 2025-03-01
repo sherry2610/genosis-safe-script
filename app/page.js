@@ -6,12 +6,16 @@ import Safe from '@safe-global/protocol-kit'
 import { erc20Abi } from "./erc20Abi";
 import SafeApiKit from "@safe-global/api-kit";
 
-
+// variables to change
 const SAFE_ADDRESS = "0x0369788F3977E7e3112d9f8f7382b261c76080Ba"
 let tokenAddress = "0x3BB6F518aB08Fc9FE5C40ad064Ba7a826bFE3b33"
 let numberOfDecimals = 18;
 const recipient = "0x6dfB4BA28112D05C2d74FEA137C0af7B6AcB3687";
-const numberOfTokens = ethers.parseUnits("2", numberOfDecimals);
+const amount = "2";
+// --------
+
+const numberOfTokens = ethers.parseUnits(amount, numberOfDecimals);
+
 
 export default function Home() {
 const [provider, setProvider] = useState();
@@ -65,15 +69,18 @@ const [callData, setCallData] = useState("")
   // create and sign with first signer
 const createSafe1 = async () => {
   try {
-if(!callData){
+
+
+    if(!connectedAddress){
+      alert("Wallet not connected!");
+      return;
+    }
+
+    if(!callData){
   alert("Generate CallData First!");
   return;
 }
 
-if(!connectedAddress){
-  alert("Wallet not connected!");
-  return;
-}
 
     const safeTransaction = await genosisSafe.createTransaction({
       transactions: [{
@@ -190,8 +197,35 @@ const callData = await contractInstance.encodeFunctionData("transfer", [recipien
           height={38}
           priority
         />
+
+        <div>
+            <div className="py-5" >
+              <h3>SAFE ADDRESS : </h3>
+              <p>{SAFE_ADDRESS}</p>
+            </div>
+
+            <div className="py-5">
+              <h3>TOKEN ADDRESS : </h3>
+              <p>{tokenAddress}</p>
+            </div>
+
+            <div className="py-5" >
+              <h3>RECIPIENT : </h3>
+              <p>{recipient}</p>
+            </div>
+
+            <div className="py-5" >
+              <h3>AMOUNT : </h3>
+              <p>{amount}</p>
+            </div>
+            </div>
+
+
+
+<div className="flex gap-8" >
+
         <button
-        className="bg-amber-200 px-5 py-2 cursor-pointer font-black text-black"  
+        className="rounded-3xl bg-amber-200 px-5 py-2 cursor-pointer font-black text-black"  
         onClick={connectWallet} 
         > 
         {
@@ -200,16 +234,16 @@ const callData = await contractInstance.encodeFunctionData("transfer", [recipien
         </button>
 
         <button 
-        className="bg-amber-200 px-5 py-2 cursor-pointer font-black text-black"  
+        className="rounded-3xl bg-amber-200 px-5 py-2 cursor-pointer font-black text-black"  
         onClick={getCalldata} > CallData</button>
         <button 
-        className="bg-amber-200 px-5 py-2 cursor-pointer font-black text-black"
+        className="rounded-3xl bg-amber-200 px-5 py-2 cursor-pointer font-black text-black"
         onClick={createSafe1} > Sign1</button>
         
         <button 
-        className="bg-amber-200 px-5 py-2 cursor-pointer font-black text-black"  
+        className="rounded-3xl bg-amber-200 px-5 py-2 cursor-pointer font-black text-black"  
         onClick={createSafe2} > Sign2</button>
-
+</div>
       </main>
       <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
         <a

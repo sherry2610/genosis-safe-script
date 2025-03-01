@@ -69,6 +69,12 @@ if(!callData){
   alert("Generate CallData First!");
   return;
 }
+
+if(!connectedAddress){
+  alert("Wallet not connected!");
+  return;
+}
+
     const safeTransaction = await genosisSafe.createTransaction({
       transactions: [{
         // to: '0xF70EB631A41F5D21C40256A17d8Afe2B2061CDcB',
@@ -98,6 +104,12 @@ if(!callData){
 // sign with second signer and execute
 const createSafe2 = async () => {
   try {
+
+    
+if(!connectedAddress){
+  alert("Wallet not connected!");
+  return;
+}
 
     if(txnWithFirstSign){
 console.log("txnWithFirstSign", txnWithFirstSign)
@@ -146,6 +158,10 @@ const getCalldata = async () => {
   try{
 
 
+    if(!connectedAddress){
+      alert("Wallet not connected!");
+      return;
+    }
 
 
 const contractInstance = new ethers.Interface(erc20Abi)

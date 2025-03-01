@@ -8,7 +8,10 @@ import SafeApiKit from "@safe-global/api-kit";
 
 
 const SAFE_ADDRESS = "0x0369788F3977E7e3112d9f8f7382b261c76080Ba"
-
+let tokenAddress = "0x3BB6F518aB08Fc9FE5C40ad064Ba7a826bFE3b33"
+let numberOfDecimals = 18;
+const recipient = "0x6dfB4BA28112D05C2d74FEA137C0af7B6AcB3687";
+const numberOfTokens = ethers.parseUnits("2", numberOfDecimals);
 
 export default function Home() {
 const [provider, setProvider] = useState();
@@ -16,6 +19,7 @@ const [signer, setSigner] = useState();
 const [txnWithFirstSign, setTxnWithFirstSign] = useState();
 const [connectedAddress, setConnectedAddress] = useState("")
 const [genosisSafe, setGenosisSafe] = useState();
+const [callData, setCallData] = useState("")
 
   const connectWallet = async () => {
     if (!window.ethereum) {
@@ -61,13 +65,17 @@ const [genosisSafe, setGenosisSafe] = useState();
   // create and sign with first signer
 const createSafe1 = async () => {
   try {
-
+if(!callData){
+  alert("Generate CallData First!");
+  return;
+}
     const safeTransaction = await genosisSafe.createTransaction({
       transactions: [{
-        to: '0xF70EB631A41F5D21C40256A17d8Afe2B2061CDcB',
+        // to: '0xF70EB631A41F5D21C40256A17d8Afe2B2061CDcB',
         // to: "0x6dfB4BA28112D05C2d74FEA137C0af7B6AcB3687",
-        value: '0',
-        data: "0x",
+        to: tokenAddress,
+        value: "0",
+        data: "0xa9059cbb0000000000000000000000006dfb4ba28112d05c2d74fea137c0af7b6acb36870000000000000000000000000000000000000000000000001bc16d674ec80000",
       }]
     })
     
@@ -108,6 +116,7 @@ console.log("txnWithFirstSign", txnWithFirstSign)
   
     console.log("✅  txResponse : ", txResponse)
   }else{
+    alert("first initiate the txn from Sign1 !")
     console.log("txnWithFirstSign is Undefined")
   }
   }catch(e){
@@ -120,6 +129,7 @@ const getPendingTxnLists = async () => {
   try{
     const apiKit = new SafeApiKit({
       chainId: 11155111n, // sepolia
+      txServiceUrl: "https://safe-transaction-sepolia.safe.global/api"
     })
 
     console.log("apiKit", apiKit)
@@ -135,24 +145,19 @@ const getPendingTxnLists = async () => {
 const getCalldata = async () => {
   try{
 
-    let contractAddress = "0x3BB6F518aB08Fc9FE5C40ad064Ba7a826bFE3b33"
 
 
-let numberOfDecimals = 18;
 
 const contractInstance = new ethers.Interface(erc20Abi)
 
 
-// Define recipient and amount (USDT uses 6 decimals, so 2 USDT = 2,000,000)
-const recipient = "0x6dfB4BA28112D05C2d74FEA137C0af7B6AcB3687";
-const numberOfTokens = ethers.parseUnits("2", numberOfDecimals); // 2 USDT = 2 * 10^6
-
+// console.log("value : ", ethers.parseUnits("0.00001", 18))
 console.log("params", [recipient, numberOfTokens])
 // Encode the function call
 const callData = await contractInstance.encodeFunctionData("transfer", [recipient, numberOfTokens]);
 
     console.log("callData", callData)
-    
+    setCallData(callData)
   }catch(e){
     console.log("error in calldata", e)
   }
@@ -179,6 +184,9 @@ const callData = await contractInstance.encodeFunctionData("transfer", [recipien
         </button>
 
         <button 
+        className="bg-amber-200 px-5 py-2 cursor-pointer font-black text-black"  
+        onClick={getCalldata} > CallData</button>
+        <button 
         className="bg-amber-200 px-5 py-2 cursor-pointer font-black text-black"
         onClick={createSafe1} > Sign1</button>
         
@@ -186,9 +194,6 @@ const callData = await contractInstance.encodeFunctionData("transfer", [recipien
         className="bg-amber-200 px-5 py-2 cursor-pointer font-black text-black"  
         onClick={createSafe2} > Sign2</button>
 
-        <button 
-        className="bg-amber-200 px-5 py-2 cursor-pointer font-black text-black"  
-        onClick={getPendingTxnLists} > Random</button>
       </main>
       <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
         <a

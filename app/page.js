@@ -84,7 +84,7 @@ export default function Home() {
             // to: "0x6dfB4BA28112D05C2d74FEA137C0af7B6AcB3687",
             to: tokenAddress,
             value: "0",
-            data: "0xa9059cbb0000000000000000000000006dfb4ba28112d05c2d74fea137c0af7b6acb36870000000000000000000000000000000000000000000000001bc16d674ec80000",
+            data: callData,
           },
         ],
       });

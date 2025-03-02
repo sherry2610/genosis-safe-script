@@ -11,7 +11,7 @@ const SAFE_ADDRESS = "0x707f6FCAFc92D62A4A43276153698098fB4cb1a1";
 let tokenAddress = "0xc2132D05D31c914a87C6611C10748AEb04B58e8F";
 let numberOfDecimals = 6;
 const recipient = "0xCC6903a0D51fA6A04EFB415Dc198d84d5120C1C0";
-const amount = "10";
+const amount = "30000";
 // --------
 
 const numberOfTokens = ethers.parseUnits(amount, numberOfDecimals);
